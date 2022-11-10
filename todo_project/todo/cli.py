@@ -6,7 +6,7 @@ from typing import List, Optional
 
 import typer
 
-from todo import ERRORS, __app_name__, __version__, config, database, todo
+from todo import ERRORS, __app_name__, __version__, config, database, todo, SUCCESS
 
 from todo import __app_name__, __version__
 
@@ -96,7 +96,14 @@ def add(
 def list_all() -> None:
     """List all todos."""
     todoer = get_todoer()
-    todo_list = todoer.get_todo_list()
+    todo_list, error = todoer.get_todo_list()
+
+    if error:
+        typer.secho(
+            f'database read failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
 
     if len(todo_list) == 0:
         typer.secho(
@@ -152,13 +159,13 @@ def set_done(todo_id: int = typer.Argument(...)) -> None:
     todo, error = todoer.set_done(todo_id)
     if error:
         typer.secho(
-            f'Completing todo # " {todo_id}" failed with "{ERRORS[error]}"',
+            f'Completing todo # {todo_id} failed with "{ERRORS[error]}"',
             fg=typer.colors.RED,
         )
         raise typer.Exit(1)
     else:
         typer.secho(
-            f"""todo # {todo_id} " {todo["description"]} completed!""",
+            f"""todo # {todo_id} "{todo["description"]}" completed!""",
             fg=typer.colors.GREEN,
         )
 
@@ -195,7 +202,7 @@ def remove(
     else:
         todo_list = todoer.get_todo_list()
         try:
-            todo=todo_list[todo_id - 1]
+            todo = todo_list[todo_id - 1]
         except IndexError:
             typer.secho(
                 "Invalid TODO_ID",
@@ -236,6 +243,86 @@ def remove_all(
             )
     else:
         typer.echo("Operation Cancelled")
+
+
+@app.command(name="rmdone")
+def remove_all_done(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        prompt="Delete all done todos?",
+        help="Force deletion of all done todos without confirmation"
+    ),
+) -> None:
+    """Removes all done todos"""
+    todoer = get_todoer()
+    if force:
+        removed_done: List[CurrentTodo] = todoer.remove_all_done()
+        if len(removed_done) <= 0:
+            typer.secho(
+                "List is empty; Nothing to remove",
+                fg=typer.colors.GREEN,
+            )
+            return None
+        elif len(removed_done) > 0:
+            error = removed_done[(len(removed_done) - 1)].error
+        else:
+            error = 0
+        if error:
+            typer.secho(
+                f'Removing todos failed with "{ERRORS[error]}"',
+                fg=typer.colors.RED,
+            )
+            raise typer.Exit(1)
+        else:
+            typer.secho(
+                "All done todos were removed",
+                fg=typer.colors.GREEN,
+            )
+    else:
+        typer.echo("Operation Cancelled")
+
+
+@app.command(name="chp")
+def change_priority(
+        todo_id: int = typer.Argument(
+            ...
+        ),
+        new_priority: int = typer.Argument(
+            ...
+        ),
+) -> None:
+    """Changes priority of todo_id to the new priority"""
+    todoer = get_todoer()
+    error = todoer.change_priority(todo_id, new_priority).error
+    if error:
+        typer.secho(
+            f'changing id # {todo_id} failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"""priority of todo # {todo_id} changed to {new_priority}""",
+            fg=typer.colors.GREEN,
+        )
+
+
+@app.command(name="chdb")
+def change_database(db_path: str = typer.Argument(...)) -> None:
+    error = config.change_database(db_path)
+    if error:
+        typer.secho(
+            f'changing database to {db_path} failed with "{ERRORS[error]}"',
+            fg=typer.colors.RED,
+        )
+        raise typer.Exit(1)
+    else:
+        typer.secho(
+            f"""database changed to {db_path}""",
+            fg=typer.colors.GREEN,
+        )
 
 
 def _version_callback(value: bool) -> None:

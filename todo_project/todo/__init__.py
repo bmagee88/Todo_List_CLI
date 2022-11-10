@@ -3,6 +3,8 @@
 
 __app_name__ = "todo"
 __version__ = "0.1.0"
+MAX_PRIORITY = 3
+MIN_PRIORITY = 1
 
 (
     SUCCESS,
@@ -11,14 +13,17 @@ __version__ = "0.1.0"
     DB_READ_ERROR,
     DB_WRITE_ERROR,
     JSON_ERROR,
+    RANGE_ERROR,
     ID_ERROR,
-) = range(7)
+) = range(8)
 
 ERRORS = {
-    DIR_ERROR: "congif directory error",
+    DIR_ERROR: "config directory error",
     FILE_ERROR: "config file error",
     DB_READ_ERROR: "database read error",
     DB_WRITE_ERROR: "database write error",
-    ID_ERROR : "to-do id error",
+    JSON_ERROR: "JSON format",
+    RANGE_ERROR: "number out of range",
+    ID_ERROR: "to-do id error"
 }
 

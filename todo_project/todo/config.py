@@ -13,7 +13,6 @@ from todo import (
 
 CONFIG_DIR_PATH = Path(typer.get_app_dir(__app_name__))
 CONFIG_FILE_PATH = CONFIG_DIR_PATH / "config.ini"
-print(CONFIG_FILE_PATH)
 
 
 def init_app(db_path: str) -> int:
@@ -49,3 +48,13 @@ def _create_database(db_path: str) -> int:
         return DB_WRITE_ERROR
     return SUCCESS
 
+
+def change_database(new_db_path: str) -> int:
+    config_parser = configparser.ConfigParser()
+    config_parser["General"] = {"database": new_db_path}
+    try:
+        with CONFIG_FILE_PATH.open("w") as file:
+            config_parser.write(file)
+    except OSError:
+        return DB_WRITE_ERROR
+    return SUCCESS

@@ -56,4 +56,4 @@ class DatabaseHandler:
                 json.dump(todo_list, db, indent=4)
             return DBResponse(todo_list, SUCCESS)
         except OSError:  # catch file io problems
-            return DBResponse(todo_list, DB-WRITE_ERROR)
+            return DBResponse(todo_list, DB_WRITE_ERROR)
